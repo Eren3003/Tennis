@@ -5,13 +5,15 @@
   <title>Tennis Ranking</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-    h1, h2 { color: #333; }
+    h1, h2, h3 { color: #333; }
     form { margin-bottom: 30px; }
     input, select { margin: 5px; padding: 5px; }
-    button { padding: 5px 10px; margin-top: 10px; }
+    button { padding: 5px 10px; margin: 5px 0; }
     table { border-collapse: collapse; width: 300px; margin-top: 20px; background: #fff; }
     th, td { border: 1px solid #aaa; padding: 8px; text-align: left; }
     th { background-color: #eee; }
+    ul { padding-left: 20px; }
+    li { margin: 5px 0; }
   </style>
 </head>
 <body>
@@ -48,6 +50,19 @@
     <tbody></tbody>
   </table>
 
+  <h3>Manueller Punktebonus</h3>
+  <select id="bonusPlayer">
+    <option value="Ali">Ali</option>
+    <option value="Ben">Ben</option>
+    <option value="Chris">Chris</option>
+  </select>
+  <button onclick="giveBonus(10)">+10</button>
+  <button onclick="giveBonus(20)">+20</button>
+  <button onclick="giveBonus(30)">+30</button>
+
+  <h2>Match-Historie</h2>
+  <ul id="matchHistoryList"></ul>
+
   <script>
     const defaultPlayers = {
       Ali: 1000,
@@ -71,6 +86,33 @@
         const row = document.createElement("tr");
         row.innerHTML = `<td>${name}</td><td>${score}</td>`;
         table.appendChild(row);
+      }
+    }
+
+    function giveBonus(amount) {
+      const player = document.getElementById("bonusPlayer").value;
+      let players = loadPlayers();
+      players[player] += amount;
+      savePlayers(players);
+      updateRankingTable(players);
+      alert(`${player} erhält +${amount} Punkte`);
+    }
+
+    function saveMatchHistory(entry) {
+      const history = JSON.parse(localStorage.getItem("matchHistory")) || [];
+      history.unshift(entry);
+      localStorage.setItem("matchHistory", JSON.stringify(history));
+      updateMatchHistory();
+    }
+
+    function updateMatchHistory() {
+      const list = document.getElementById("matchHistoryList");
+      const history = JSON.parse(localStorage.getItem("matchHistory")) || [];
+      list.innerHTML = "";
+      for (const match of history) {
+        const li = document.createElement("li");
+        li.textContent = `${match.winner} gewinnt gegen ${match.loser} (${match.date})`;
+        list.appendChild(li);
       }
     }
 
@@ -110,13 +152,17 @@
 
       players[playerA] += pointsA;
       players[playerB] += pointsB;
-
       savePlayers(players);
       updateRankingTable(players);
+
+      const loser = winner === playerA ? playerB : playerA;
+      saveMatchHistory({ winner, loser, date: new Date().toLocaleString() });
+
       alert("Match eingetragen!");
     });
 
     updateRankingTable(loadPlayers());
+    updateMatchHistory();
   </script>
 </body>
 </html>
